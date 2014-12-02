@@ -1,0 +1,9 @@
+Package: com.mootjeuh.PrettierBanners
+Name: Prettier Banners
+Depends: mobilesubstrate
+Version: 0.1
+Architecture: iphoneos-arm
+Description: Show more info about contact in banners
+Maintainer: Mohamed Marbouh
+Author: Mohamed Marbouh
+Section: Tweaks
