@@ -75,3 +75,22 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
 }
 
 %end
+
+%hook SBLockScreenNotificationListView
+
+- (SBLockScreenNotificationCell*)tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
+{
+    SBLockScreenNotificationCell *cell = %orig;
+    id item = [(SBLockScreenNotificationListController*)self.nextResponder listItemAtIndexPath:indexPath];
+    if([NSStringFromClass([item class]) isEqualToString:@"SBAwayBulletinListItem"]) {
+        BBBulletin *bulletin = [item activeBulletin];
+		ABRecordRef person = getPersonFromBulletin(bulletin);
+		if(person) {
+			cell.icon = getABPersonImage(person) ? : cell.icon;
+		}
+        return cell;
+    }
+    return cell;
+}
+
+%end
