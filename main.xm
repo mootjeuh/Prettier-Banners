@@ -88,7 +88,6 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
 		if(person) {
 			cell.icon = getABPersonImage(person) ? : cell.icon;
 		}
-        return cell;
     }
     return cell;
 }
