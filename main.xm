@@ -86,7 +86,10 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
         BBBulletin *bulletin = [item activeBulletin];
 		ABRecordRef person = getPersonFromBulletin(bulletin);
 		if(person) {
-			cell.icon = getABPersonImage(person) ? : cell.icon;
+            UIImage *icon = getABPersonImage(person);
+            if(icon) {
+                cell.icon = icon;
+            }
 		}
     }
     return cell;
