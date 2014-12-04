@@ -11,7 +11,6 @@
 
 @interface BBBulletin : NSObject
 
-@property(copy, nonatomic) NSString *sectionID;
 @property(retain, nonatomic) NSDictionary *context;
 
 @end
