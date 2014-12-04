@@ -60,7 +60,11 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
 		names = [NSMutableArray array];
 		for(NSDictionary *entry in msgRecipients) {
 			NSDictionary *object = [NSDictionary dictionaryWithDictionary:entry[@"object"]];
-			[names addObject:object[@"firstName"]];
+            if([[object allKeys] containsObject:@"firstName"]) {
+				[names addObject:object[@"firstName"]];
+			} else {
+				[names addObject:entry[@"data"]];
+			}
 		}
 	}
 	
