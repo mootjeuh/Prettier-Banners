@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import <AddressBook/AddressBook.h>
 #import "interfaces.h"
 #import "substrate.h"
@@ -20,7 +21,7 @@ static NSArray *getABPersons()
 
 static UIImage *getABPersonImage(ABRecordRef person)
 {
-	return ABPersonHasImageData(person) ? [UIImage imageWithData:(__bridge NSData*)ABPersonCopyImageData(person)] : nil;
+	return ABPersonHasImageData(person) ? [UIImage imageWithData:(__bridge NSData *)ABPersonCopyImageDataWithFormat(person, kABPersonImageFormatOriginalSize)] : nil;
 }
 
 static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
@@ -44,8 +45,26 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
 	UIImage *image = %orig;
 	ABRecordRef person = getPersonFromBulletin([self seedBulletin]);
 	if(person) {
-		image = getABPersonImage(person) ? : image;
+		UIImage *personImage = getABPersonImage(person);
+		if (personImage) {
+			CGRect iconImageRect = (CGRect){CGPointZero, image.size};
+			
+			UIGraphicsBeginImageContextWithOptions(iconImageRect.size, NO, [UIScreen mainScreen].scale);
+			CGContextRef context = UIGraphicsGetCurrentContext();
+
+			CGContextSaveGState(context);
+			CGContextAddEllipseInRect(context, iconImageRect);
+			CGContextClip(context);
+			CGContextClearRect(context, iconImageRect);
+			[personImage drawInRect:iconImageRect];
+
+			UIImage *circularScaledImage = UIGraphicsGetImageFromCurrentImageContext(); 
+			UIGraphicsEndImageContext();
+			
+			return circularScaledImage;
+		}
 	}
+
 	return image;
 }
 
