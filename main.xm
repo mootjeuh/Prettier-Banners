@@ -19,29 +19,13 @@ static NSArray *getABPersons()
 	return persons;
 }
 
-static UIImage *getABPersonImageWithSize(ABRecordRef person, CGSize size)
+static UIImage *getABPersonImage(ABRecordRef person)
 {
-	if (!ABPersonHasImageData(person)) {
+	if (!person) {
 		return nil;
 	}
 
-	UIImage *personImage = [UIImage imageWithData:(__bridge NSData *)ABPersonCopyImageDataWithFormat(person, kABPersonImageFormatOriginalSize)];
-
-	CGRect iconImageRect = (CGRect){CGPointZero, size};
-			
-	UIGraphicsBeginImageContextWithOptions(iconImageRect.size, NO, [UIScreen mainScreen].scale);
-	CGContextRef context = UIGraphicsGetCurrentContext();
-
-	CGContextSaveGState(context);
-	CGContextAddEllipseInRect(context, iconImageRect);
-	CGContextClip(context);
-	CGContextClearRect(context, iconImageRect);
-	[personImage drawInRect:iconImageRect];
-
-	UIImage *circularScaledImage = UIGraphicsGetImageFromCurrentImageContext(); 
-	UIGraphicsEndImageContext();
-		
-	return circularScaledImage;
+	return ABPersonHasImageData(person) ? [UIImage imageWithData:(__bridge NSData *)ABPersonCopyImageDataWithFormat(person, kABPersonImageFormatOriginalSize)] : nil;
 }
 
 static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
@@ -64,11 +48,23 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
 {
 	UIImage *image = %orig;
 	ABRecordRef person = getPersonFromBulletin([self seedBulletin]);
-	if(person) {
-		UIImage *personImage = getABPersonImageWithSize(person, image.size);
-		if (personImage) {
-			return personImage;
-		}
+	UIImage *personImage = getABPersonImage(person);
+	if (personImage) {
+		CGRect iconImageRect = (CGRect){CGPointZero, image.size};
+		
+		UIGraphicsBeginImageContextWithOptions(iconImageRect.size, NO, [UIScreen mainScreen].scale);
+		CGContextRef context = UIGraphicsGetCurrentContext();
+
+		CGContextSaveGState(context);
+		CGContextAddEllipseInRect(context, iconImageRect);
+		CGContextClip(context);
+		CGContextClearRect(context, iconImageRect);
+		[personImage drawInRect:iconImageRect];
+
+		UIImage *circularScaledImage = UIGraphicsGetImageFromCurrentImageContext(); 
+		UIGraphicsEndImageContext();
+			
+		return circularScaledImage;
 	}
 
 	return image;
@@ -115,13 +111,21 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
         BBBulletin *bulletin = [item activeBulletin];
 		ABRecordRef person = getPersonFromBulletin(bulletin);
 
-		if(person) {
-            UIImage *icon = getABPersonImageWithSize(person, cell.icon.size);
-            if(icon) {
-                cell.icon = icon;
-            }
-		}
+        UIImage *personIcon = getABPersonImage(person);
+        if(personIcon) {
+        	cell.iconView.contentMode = UIViewContentModeScaleAspectFill;
+        	cell.iconView.layer.cornerRadius = cell.iconView.frame.size.width / 2.0;
+        	cell.iconView.layer.masksToBounds = YES;
+            cell.icon = personIcon;
+        }
+
+        else {
+	    	cell.iconView.contentMode = UIViewContentModeScaleToFill;
+        	cell.iconView.layer.cornerRadius = 0.0;
+        	cell.iconView.layer.masksToBounds = NO;
+        }
     }
+
     return cell;
 }
 
