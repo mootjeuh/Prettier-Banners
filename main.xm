@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import <AddressBook/AddressBook.h>
 #import "interfaces.h"
 #import "substrate.h"
@@ -20,7 +21,11 @@ static NSArray *getABPersons()
 
 static UIImage *getABPersonImage(ABRecordRef person)
 {
-	return ABPersonHasImageData(person) ? [UIImage imageWithData:(__bridge NSData*)ABPersonCopyImageData(person)] : nil;
+	if (!person) {
+		return nil;
+	}
+
+	return ABPersonHasImageData(person) ? [UIImage imageWithData:(__bridge NSData *)ABPersonCopyImageDataWithFormat(person, kABPersonImageFormatOriginalSize)] : nil;
 }
 
 static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
@@ -43,9 +48,25 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
 {
 	UIImage *image = %orig;
 	ABRecordRef person = getPersonFromBulletin([self seedBulletin]);
-	if(person) {
-		image = getABPersonImage(person) ? : image;
+	UIImage *personImage = getABPersonImage(person);
+	if (personImage) {
+		CGRect iconImageRect = (CGRect){CGPointZero, image.size};
+		
+		UIGraphicsBeginImageContextWithOptions(iconImageRect.size, NO, [UIScreen mainScreen].scale);
+		CGContextRef context = UIGraphicsGetCurrentContext();
+
+		CGContextSaveGState(context);
+		CGContextAddEllipseInRect(context, iconImageRect);
+		CGContextClip(context);
+		CGContextClearRect(context, iconImageRect);
+		[personImage drawInRect:iconImageRect];
+
+		UIImage *circularScaledImage = UIGraphicsGetImageFromCurrentImageContext(); 
+		UIGraphicsEndImageContext();
+			
+		return circularScaledImage;
 	}
+
 	return image;
 }
 
@@ -89,13 +110,22 @@ static ABRecordRef getPersonFromBulletin(BBBulletin *bulletin)
     if([NSStringFromClass([item class]) isEqualToString:@"SBAwayBulletinListItem"]) {
         BBBulletin *bulletin = [item activeBulletin];
 		ABRecordRef person = getPersonFromBulletin(bulletin);
-		if(person) {
-            UIImage *icon = getABPersonImage(person);
-            if(icon) {
-                cell.icon = icon;
-            }
-		}
+
+        UIImage *personIcon = getABPersonImage(person);
+        if(personIcon) {
+        	cell.iconView.contentMode = UIViewContentModeScaleAspectFill;
+        	cell.iconView.layer.cornerRadius = cell.iconView.frame.size.width / 2.0;
+        	cell.iconView.layer.masksToBounds = YES;
+            cell.icon = personIcon;
+        }
+
+        else {
+	    	cell.iconView.contentMode = UIViewContentModeScaleToFill;
+        	cell.iconView.layer.cornerRadius = 0.0;
+        	cell.iconView.layer.masksToBounds = NO;
+        }
     }
+
     return cell;
 }
 
